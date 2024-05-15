@@ -8,7 +8,7 @@ import (
 )
 
 const USAGE = `
- Usage: go run main.go [--url URL | --hiphop | --synth] [--volume VOLUME]
+ Usage: go run main.go [--url URL | --hiphop | --synth | --piano | --ambient ] [--volume VOLUME | --mute ]
 `
 
 const HIPHOP = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
@@ -49,7 +49,8 @@ func play(url string, volume string) {
 func main() {
     var volume = "100" // Default volume
     var URL = HIPHOP // Default to hiphop
-    
+    var mute = false
+
     // Parse command line arguments
     for i, arg := range os.Args {
         if i == 0 {
@@ -67,6 +68,10 @@ func main() {
             }
             volume = os.Args[i+1]
         }
+        if arg == "--mute" {
+            mute = true
+        }
+
         // Video Control
         // In built video options
         if arg == "--hiphop" {
@@ -90,6 +95,9 @@ func main() {
             URL = os.Args[i+1]
         }
     }
-    play(URL, volume)
+
+    if !mute {
+        play(URL, volume)
+    }
 }
 
