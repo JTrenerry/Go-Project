@@ -5,18 +5,28 @@ import (
     "log"
     "os"
     "os/exec"
+    "sync"
+)
+const ( 
+    USAGE = `Usage: go run main.go [--url URL | --hiphop | --synth | --piano | --ambient ] [--volume VOLUME | --mute ]`
+    HIPHOP = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
+    SYNTH = "https://www.youtube.com/watch?v=4xDzrJKXOOY"
+    PIANO = "https://www.youtube.com/watch?v=4oStw0r33so"
+    AMBIENT = "https://www.youtube.com/watch?v=S_MOd40zlYU"
+	clearScreen = "\033[2J"
+	moveTopLeft = "\033[H"
 )
 
-const USAGE = `
- Usage: go run main.go [--url URL | --hiphop | --synth | --piano | --ambient ] [--volume VOLUME | --mute ]
-`
+// Displays some art to chill to
+// TODO
+func display() {
+    fmt.Print(clearScreen)
+	fmt.Print(moveTopLeft)
+}
 
-const HIPHOP = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
-const SYNTH = "https://www.youtube.com/watch?v=4xDzrJKXOOY"
-const PIANO = "https://www.youtube.com/watch?v=4oStw0r33so"
-const AMBIENT = "https://www.youtube.com/watch?v=S_MOd40zlYU"
-
-func play(url string, volume string) {
+// Play the audio stream from the given URL
+func play(url string, volume string, wg *sync.WaitGroup) {
+    defer wg.Done()
 
     // Use yt-dlp to get the best audio stream URL
     cmd := exec.Command("yt-dlp", "-f", "bestaudio", "-g", url)
@@ -26,8 +36,6 @@ func play(url string, volume string) {
     if err != nil {
         log.Fatalf("Failed to get audio URL: %v", err)
     }
-
-    log.Printf("Got audio URL: %s", url)
     
     audioURL := string(out)
     audioURL = audioURL[:len(audioURL)-1] // Remove the trailing newline
@@ -35,8 +43,6 @@ func play(url string, volume string) {
     // Use mpv to play the audio stream
 
     playCmd := exec.Command("mpv", audioURL, "--volume=" + volume)
-    playCmd.Stdout = os.Stdout
-    playCmd.Stderr = os.Stderr
 
     err = playCmd.Run()
 
@@ -47,7 +53,7 @@ func play(url string, volume string) {
 }
 
 func main() {
-    var volume = "100" // Default volume
+    var volume = "75" // Default volume
     var URL = HIPHOP // Default to hiphop
     var mute = false
 
@@ -96,8 +102,15 @@ func main() {
         }
     }
 
-    if !mute {
-        play(URL, volume)
-    }
-}
+    var wg sync.WaitGroup
 
+    wg.Add(1)
+
+    if !mute {
+        go play(URL, volume, &wg)
+    }
+
+    display()
+
+    wg.Wait()
+}
