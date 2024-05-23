@@ -6,7 +6,11 @@ import (
     "os"
     "os/exec"
     "sync"
+    "time"
+    "os/signal"
+    "strconv"
 )
+
 const ( 
     USAGE = `Usage: go run main.go [--url URL | --hiphop | --synth | --piano | --ambient ] [--volume VOLUME | --mute ]`
     HIPHOP = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
@@ -17,11 +21,40 @@ const (
 	moveTopLeft = "\033[H"
 )
 
+var mpvProcess *os.Process
+
 // Displays some art to chill to
 // TODO
 func display() {
-    fmt.Print(clearScreen)
-	fmt.Print(moveTopLeft)
+    times := 0
+    for true {
+        time.Sleep(1 * time.Second)
+        fmt.Print(clearScreen)
+        fmt.Print(moveTopLeft)
+        fmt.Println("\n"+"\n"+"\n"+"\n"+"\n"+
+    `
+                                                                                           
+                                                                                           
+                                          
+                      ______________                   
+                    .'              '.      
+                    ,'--..______..--',                   
+                  .'                  '.  
+                  l                    1  
+                 l                      1 
+                 l          CK          1 
+                 '.                    .' 
+                  l                    1  
+                   l.                ,1   
+                     ',____________,'                    
+                                          
+                                          
+                                          
+                                          
+    `)
+        fmt.Println("Time spent: " + strconv.Itoa(times))
+        times++
+    }
 }
 
 // Play the audio stream from the given URL
@@ -43,13 +76,12 @@ func play(url string, volume string, wg *sync.WaitGroup) {
     // Use mpv to play the audio stream
 
     playCmd := exec.Command("mpv", audioURL, "--volume=" + volume)
+	
+    mpvProcess = playCmd.Process
+    //playCmd.Stdout = os.Stdout
+    //playCmd.Stderr = os.Stderr
 
     err = playCmd.Run()
-
-    // Check if the audio stream failed to play
-    if err != nil {
-        log.Fatalf("Failed to play audio: %v", err)
-    }
 }
 
 func main() {
@@ -106,11 +138,30 @@ func main() {
 
     wg.Add(1)
 
+	sigs := make(chan os.Signal, 1)
+    signal.Notify(sigs, os.Interrupt, os.Kill)
+
     if !mute {
         go play(URL, volume, &wg)
     }
 
-    display()
+    go func() {
+		// Wait for a signal
+		sig := <-sigs
+		log.Printf("Received signal: %v. Forwarding to MPV.", sig)
+
+		// Forward the signal to the MPV process
+		if mpvProcess != nil {
+			if err := mpvProcess.Signal(sig); err != nil {
+				log.Printf("Failed to forward signal to MPV: %v", err)
+			}
+		} else {
+			log.Printf("MPV process not found.")
+		}
+        os.Exit(0)
+	}()
+
+    go display()
 
     wg.Wait()
 }
