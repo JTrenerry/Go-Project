@@ -31,27 +31,7 @@ func display() {
         time.Sleep(1 * time.Second)
         fmt.Print(clearScreen)
         fmt.Print(moveTopLeft)
-        fmt.Println("\n"+"\n"+"\n"+"\n"+"\n"+
-    `
-                                                                                           
-                                                                                           
-                                          
-                      ______________                   
-                    .'              '.      
-                    ,'--..______..--',                   
-                  .'                  '.  
-                  l                    1  
-                 l                      1 
-                 l          CK          1 
-                 '.                    .' 
-                  l                    1  
-                   l.                ,1   
-                     ',____________,'                    
-                                          
-                                          
-                                          
-                                          
-    `)
+        fmt.Println("\n"+"\n"+"\n"+"\n"+"\n"+FISH)
         fmt.Println("Time spent: " + strconv.Itoa(times))
         times++
     }
