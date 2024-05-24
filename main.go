@@ -17,21 +17,18 @@ const (
     SYNTH = "https://www.youtube.com/watch?v=4xDzrJKXOOY"
     PIANO = "https://www.youtube.com/watch?v=4oStw0r33so"
     AMBIENT = "https://www.youtube.com/watch?v=S_MOd40zlYU"
-	clearScreen = "\033[2J"
-	moveTopLeft = "\033[H"
 )
 
 var mpvProcess *os.Process
 
 // Displays some art to chill to
-// TODO
-func display() {
+func display(wg *sync.WaitGroup) {
+    defer wg.Done()
     times := 0
     for true {
         time.Sleep(1 * time.Second)
-        fmt.Print(clearScreen)
-        fmt.Print(moveTopLeft)
-        fmt.Println("\n"+"\n"+"\n"+"\n"+"\n"+FISH)
+        fmt.Print("\033[H\033[2J")
+        fmt.Println(FISH[times%2])
         fmt.Println("Time spent: " + strconv.Itoa(times))
         times++
     }
@@ -116,7 +113,7 @@ func main() {
 
     var wg sync.WaitGroup
 
-    wg.Add(1)
+    wg.Add(2)
 
 	sigs := make(chan os.Signal, 1)
     signal.Notify(sigs, os.Interrupt, os.Kill)
@@ -141,7 +138,7 @@ func main() {
         os.Exit(0)
 	}()
 
-    go display()
+    go display(&wg)
 
     wg.Wait()
 }
